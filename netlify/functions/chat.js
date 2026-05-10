@@ -65,6 +65,7 @@ Jangan pernah hard selling. Jangan validasi keputusan yang belum tentu tepat han
     });
 
     const data = await response.json();
+    console.log('Anthropic response:', JSON.stringify(data));
 
     let reply = '';
     if (data.content) {
@@ -73,7 +74,10 @@ Jangan pernah hard selling. Jangan validasi keputusan yang belum tentu tepat han
       }
     }
 
-    if (!reply) reply = 'Hmm, ada gangguan sebentar. Coba tanya lagi ya!';
+    if (!reply) {
+      console.log('No reply found, full data:', JSON.stringify(data));
+      reply = 'Hmm, ada gangguan sebentar. Coba tanya lagi ya!';
+    }
 
     return {
       statusCode: 200,
