@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI Shopping Partner</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --bg: #ffffff;
+    --bg2: #f5f7fa;
+    --bg3: #eef1f5;
+    --border: rgba(0,0,0,0.08);
+    --border2: rgba(0,0,0,0.14);
+    --text: #111111;
+    --muted: #888;
+    --accent: #1a6ef5;
+    --accent2: #3b84ff;
+    --accent-light: #e8f0fe;
+    --green: #12b76a;
+    --radius: 14px;
+  }
+  body { background: var(--bg); color: var(--text); font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; min-height: 100vh; }
+
+  #landing { display: flex; flex-direction: column; min-height: 100vh; }
+  nav { display: flex; align-items: center; padding: 20px 24px; border-bottom: 0.5px solid var(--border); }
+  .logo { font-size: 15px; font-weight: 700; letter-spacing: -0.3px; }
+  .logo span { color: var(--accent); }
+  .hero { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 56px 24px 64px; }
+  .badge { display: inline-flex; align-items: center; gap: 6px; background: var(--accent-light); border: 0.5px solid rgba(26,110,245,0.2); color: var(--accent); font-size: 12px; font-weight: 500; padding: 5px 12px; border-radius: 20px; margin-bottom: 28px; }
+  .badge-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--green); }
+  h1 { font-size: clamp(26px, 6vw, 42px); font-weight: 700; line-height: 1.2; letter-spacing: -0.8px; max-width: 560px; margin-bottom: 18px; }
+  h1 em { color: var(--accent); font-style: normal; }
+  .sub { font-size: 15px; color: var(--muted); line-height: 1.7; max-width: 420px; margin-bottom: 40px; }
+  .cta-main { background: var(--accent); color: #fff; border: none; padding: 14px 32px; border-radius: 10px; font-size: 15px; font-weight: 600; cursor: pointer; }
+  .cta-main:hover { background: var(--accent2); }
+
+  #chat { display: none; flex-direction: column; height: 100vh; }
+  .chat-nav { display: flex; align-items: center; gap: 12px; padding: 14px 16px; border-bottom: 0.5px solid var(--border); }
+  .back-btn { background: none; border: 0.5px solid var(--border2); color: var(--text); padding: 6px 12px; border-radius: 8px; font-size: 13px; cursor: pointer; }
+  .chat-title { flex: 1; }
+  .chat-title p { font-size: 14px; font-weight: 600; }
+  .chat-title span { font-size: 11px; color: var(--green); }
+  .avatar { width: 32px; height: 32px; border-radius: 50%; background: var(--accent-light); display: flex; align-items: center; justify-content: center; font-size: 16px; }
+
+  .messages { flex: 1; overflow-y: auto; padding: 16px; display: flex; flex-direction: column; gap: 14px; }
+  .msg { display: flex; gap: 10px; }
+  .msg.user { flex-direction: row-reverse; }
+  .bubble { padding: 10px 14px; border-radius: 14px; font-size: 14px; line-height: 1.65; max-width: 86%; }
+  .msg.ai .bubble { background: var(--bg2); border: 0.5px solid var(--border); border-radius: 4px 14px 14px 14px; }
+  .msg.user .bubble { background: var(--accent); color: #fff; border-radius: 14px 4px 14px 14px; }
+  .msg-icon { width: 28px; height: 28px; border-radius: 50%; flex-shrink: 0; display: flex; align-items: center; justify-content: center; font-size: 13px; margin-top: 2px; }
+  .msg.ai .msg-icon { background: var(--accent-light); }
+  .msg.user .msg-icon { background: var(--bg3); border: 0.5px solid var(--border2); }
+
+  .loading-bubble { background: var(--bg2); border: 0.5px solid var(--border); border-radius: 4px 14px 14px 14px; padding: 12px 14px; max-width: 86%; }
+  .loading-status { font-size: 12px; color: var(--muted); display: flex; align-items: center; gap: 6px; }
+  .spinner { width: 10px; height: 10px; border: 1.5px solid var(--border2); border-top-color: var(--accent); border-radius: 50%; animation: spin 0.8s linear infinite; flex-shrink: 0; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .suggestions { padding: 0 16px 8px; display: flex; flex-wrap: wrap; gap: 6px; }
+  .chip { background: var(--bg2); border: 0.5px solid var(--border2); color: var(--muted); padding: 6px 12px; border-radius: 20px; font-size: 12px; cursor: pointer; white-space: nowrap; }
+  .chip:hover { border-color: var(--accent); color: var(--accent); background: var(--accent-light); }
+
+  .input-area { padding: 12px 16px 20px; border-top: 0.5px solid var(--border); display: flex; gap: 8px; }
+  #msgInput { flex: 1; background: var(--bg2); border: 0.5px solid var(--border2); color: var(--text); padding: 10px 14px; border-radius: 10px; font-size: 14px; outline: none; font-family: inherit; resize: none; height: 42px; }
+  #msgInput:focus { border-color: var(--accent); }
+  #msgInput::placeholder { color: var(--muted); }
+  .send-btn { background: var(--accent); border: none; color: #fff; width: 42px; height: 42px; border-radius: 10px; cursor: pointer; font-size: 18px; display: flex; align-items: center; justify-content: center; }
+  .send-btn:disabled { opacity: 0.35; cursor: default; }
+</style>
+</head>
+<body>
+
+<div id="landing">
+  <nav><div class="logo">AI <span>Shopping</span> Partner</div></nav>
+  <section class="hero">
+    <div class="badge"><span class="badge-dot"></span> AI-powered decision companion</div>
+    <h1>Shopping Partner yang Bikin Belanja Lebih <em>Tenang</em>, Tanpa Overthinking.</h1>
+    <p class="sub">Teman belanja berbasis AI yang membantu membandingkan, menyederhanakan pilihan, dan menghindari salah beli di tengah terlalu banyak opsi.</p>
+    <button class="cta-main" onclick="goToChat()">Klik Buat Diskusi</button>
+  </section>
+</div>
+
+<div id="chat">
+  <div class="chat-nav">
+    <button class="back-btn" onclick="goToLanding()">← Kembali</button>
+    <div class="chat-title">
+      <p>AI Shopping Partner</p>
+      <span>● Online & siap bantu</span>
+    </div>
+    <div class="avatar">🛍️</div>
+  </div>
+
+  <div class="messages" id="messages">
+    <div class="msg ai">
+      <div class="msg-icon">✨</div>
+      <div class="bubble">Halo! Aku di sini bukan cuma buat bilang "iya, beli aja" — tapi buat bantu kamu mikir lebih jernih sebelum checkout. 😄<br><br>Kita bahas bareng dari berbagai sisi: worth it nggak, ini kebutuhan atau keinginan, ada alternatif lebih baik, dan seterusnya.<br><br>Mau beli apa sekarang?</div>
+    </div>
+  </div>
+
+  <div class="suggestions" id="suggestions">
+    <div class="chip" onclick="sendChip('Mau beli laptop buat kerja, budget sekitar 8 juta')">💻 Laptop kerja 8 juta</div>
+    <div class="chip" onclick="sendChip('Cari skincare buat kulit sensitif dan gampang jerawatan')">🧴 Skincare sensitif</div>
+    <div class="chip" onclick="sendChip('Mouse wireless buat desain grafis, budget 300–500 ribu')">🖱️ Mouse desain</div>
+    <div class="chip" onclick="sendChip('Earphone terbaik budget 500 ribu')">🎧 Earphone 500rb</div>
+  </div>
+
+  <div class="input-area">
+    <textarea id="msgInput" placeholder="Cerita dulu mau beli apa..." onkeydown="handleKey(event)"></textarea>
+    <button class="send-btn" id="sendBtn" onclick="sendMessage()">↑</button>
+  </div>
+</div>
+
+<script>
+let history = [];
+let busy = false;
+
+function goToChat() {
+  document.getElementById('landing').style.display = 'none';
+  document.getElementById('chat').style.display = 'flex';
+}
+function goToLanding() {
+  document.getElementById('chat').style.display = 'none';
+  document.getElementById('landing').style.display = 'flex';
+}
+function handleKey(e) {
+  if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); }
+}
+function sendChip(text) {
+  document.getElementById('msgInput').value = text;
+  document.getElementById('suggestions').style.display = 'none';
+  sendMessage();
+}
+
+function addMsg(role, html) {
+  const wrap = document.createElement('div');
+  wrap.className = `msg ${role}`;
+  const icon = document.createElement('div');
+  icon.className = 'msg-icon';
+  icon.textContent = role === 'ai' ? '✨' : '👤';
+  const bub = document.createElement('div');
+  bub.className = 'bubble';
+  bub.innerHTML = html;
+  if (role === 'ai') { wrap.appendChild(icon); wrap.appendChild(bub); }
+  else { wrap.appendChild(bub); wrap.appendChild(icon); }
+  document.getElementById('messages').appendChild(wrap);
+  wrap.scrollIntoView({ behavior: 'smooth', block: 'end' });
+}
+
+let loadingEl = null;
+function showLoading() {
+  const wrap = document.createElement('div');
+  wrap.className = 'msg ai';
+  wrap.id = 'loading-msg';
+  const icon = document.createElement('div');
+  icon.className = 'msg-icon';
+  icon.textContent = '✨';
+  const bub = document.createElement('div');
+  bub.className = 'loading-bubble';
+  bub.innerHTML = `<div class="loading-status"><div class="spinner"></div><span>Sebentar, lagi mikir...</span></div>`;
+  wrap.appendChild(icon);
+  wrap.appendChild(bub);
+  document.getElementById('messages').appendChild(wrap);
+  wrap.scrollIntoView({ behavior: 'smooth', block: 'end' });
+  loadingEl = wrap;
+}
+function removeLoading() {
+  if (loadingEl) { loadingEl.remove(); loadingEl = null; }
+}
+
+function fmt(text) {
+  return text
+    .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+    .replace(/\*(.*?)\*/g, '<em>$1</em>')
+    .replace(/#{1,3} (.+)/g, '<br><strong>$1</strong><br>')
+    .replace(/\n- /g, '<br>• ')
+    .replace(/\n• /g, '<br>• ')
+    .replace(/\n\n/g, '<br><br>')
+    .replace(/\n/g, '<br>');
+}
+
+async function sendMessage() {
+  if (busy) return;
+  const input = document.getElementById('msgInput');
+  const text = input.value.trim();
+  if (!text) return;
+
+  input.value = '';
+  document.getElementById('suggestions').style.display = 'none';
+  addMsg('user', text);
+  history.push({ role: 'user', content: text });
+
+  busy = true;
+  document.getElementById('sendBtn').disabled = true;
+  showLoading();
+
+  try {
+    const res = await fetch('/api/chat', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ messages: history })
+    });
+
+    const data = await res.json();
+    removeLoading();
+
+    const reply = data.reply || 'Hmm, ada gangguan sebentar. Coba tanya lagi ya!';
+    history.push({ role: 'assistant', content: reply });
+    addMsg('ai', fmt(reply));
+
+  } catch (err) {
+    removeLoading();
+    addMsg('ai', '⚠️ Koneksi bermasalah. Coba lagi ya!');
+  }
+
+  busy = false;
+  document.getElementById('sendBtn').disabled = false;
+}
+</script>
+</body>
+</html>
